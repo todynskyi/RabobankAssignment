@@ -11,7 +11,11 @@
 
     <dependencies>
         <!-- Add your dependencies here! -->
-
+        <dependency>
+            <groupId>nl.rabobank</groupId>
+            <artifactId>rabobank-assignment-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Mongo -->
         <dependency>
