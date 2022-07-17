@@ -17,7 +17,7 @@ Account API Endpoints:
 
 ### Local Environment preparation
 
-Install next soft
+Install the next soft
  - Java 11
  - Maven
  - Intellij Idea
