@@ -124,7 +124,7 @@ public class PowerOfAttorneyServiceITest {
         assertEquals("Cannot find account by account number: fake number", thrown.getMessage());
     }
 
-    @DisplayName("Should fetch Granted Accounts")
+    @DisplayName("Should fetch Granted Accounts By Grantee")
     @Test
     public void shouldFetchGrantedAccounts() {
         String grantee = "grantee";
@@ -143,6 +143,28 @@ public class PowerOfAttorneyServiceITest {
 
         List<Account> grantedAccounts = powerOfAttorneyService.getGrantedAccounts(grantee);
         assertEquals(2, grantedAccounts.size());
+        assertEquals(expected, grantedAccounts);
+    }
+
+    @DisplayName("Should fetch Granted Accounts By Grantee and Authorization")
+    @Test
+    public void shouldFetchGrantedAccountsByAuthorization() {
+        String grantee = "grantee";
+
+        AccountEntity ownAccount = accountRepository.save(createAccountEntity(generateAccountNumber(), grantee, AccountType.SAVINGS, 100.));
+        AccountEntity account1 = accountRepository.save(createAccountEntity(generateAccountNumber(), "Holder1", AccountType.SAVINGS, 100.));
+        AccountEntity account2 = accountRepository.save(createAccountEntity(generateAccountNumber(), "Holder2", AccountType.PAYMENT, 100.));
+        accountRepository.save(createAccountEntity(generateAccountNumber(), "Holder3", AccountType.SAVINGS, 100.));
+
+        accountRepository.save(account1.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.READ)));
+        accountRepository.save(account1.addGrantee(new PowerOfAttorneyGrantee(account2.getAccountHolderName(), Authorization.READ)));
+        accountRepository.save(account2.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.READ)));
+        accountRepository.save(account2.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.WRITE)));
+
+        List<Account> expected = Stream.of(account2).map(toAccountConverter::convert).collect(Collectors.toList());
+
+        List<Account> grantedAccounts = powerOfAttorneyService.getGrantedAccounts(grantee, Authorization.WRITE);
+        assertEquals(1, grantedAccounts.size());
         assertEquals(expected, grantedAccounts);
     }
 

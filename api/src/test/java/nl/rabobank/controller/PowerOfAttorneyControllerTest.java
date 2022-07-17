@@ -16,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,7 +85,7 @@ public class PowerOfAttorneyControllerTest {
     @DisplayName("Should not create Power Of Attorney and return NotFound in case of missing account")
     @SneakyThrows
     @ParameterizedTest(name = "{index} Authorization: {0}")
-    @MethodSource("nl.rabobank.util.PowerOfAttorneyTestDataUtils#source")
+    @EnumSource(value = Authorization.class)
     public void shouldNotCreatePowerOfAttorneyAndReturnNotFoundInCaseOfMissingAccount(Authorization authorization) {
         ErrorDetails error = new ErrorDetails("Cannot find account");
         CreatePowerOfAttorneyDto powerOfAttorneyDto = createPowerOfAttorneyDto(authorization);
@@ -100,7 +101,7 @@ public class PowerOfAttorneyControllerTest {
     @DisplayName("Should not create Power Of Attorney and return Unauthorized in in case of granting not own account")
     @SneakyThrows
     @ParameterizedTest(name = "{index} Authorization: {0}")
-    @MethodSource("nl.rabobank.util.PowerOfAttorneyTestDataUtils#source")
+    @EnumSource(value = Authorization.class)
     public void shouldNotCreatePowerOfAttorneyAndReturnNotFoundInCaseOfGrantingNotOwnAccount(Authorization authorization) {
         ErrorDetails error = new ErrorDetails("Grantor can give access only for own account");
         CreatePowerOfAttorneyDto powerOfAttorneyDto = createPowerOfAttorneyDto(authorization);
@@ -125,6 +126,22 @@ public class PowerOfAttorneyControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().bytes(objectMapper.writeValueAsBytes(accounts)))
+                .andDo(print());
+    }
+
+    @DisplayName("Should return Granted Accounts by Grantee")
+    @SneakyThrows
+    @ParameterizedTest(name = "{index} Authorization: {0}")
+    @EnumSource(value = Authorization.class)
+    public void shouldReturnGrantedAccountsByAuthorization(Authorization authorization) {
+        String granteeName = "Grantee";
+        List<Account> accounts = createAccounts(granteeName);
+        Mockito.when(powerOfAttorneyService.getGrantedAccounts(granteeName, authorization)).thenReturn(accounts);
+
+        mockMvc.perform(get("/api/v1/power-of-attorneys/{granteeName}/accounts/{authorization}", granteeName, authorization)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string(objectMapper.writeValueAsString(accounts)))
                 .andDo(print());
     }
 

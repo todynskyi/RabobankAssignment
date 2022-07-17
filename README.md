@@ -1,14 +1,14 @@
 ## Rabobank Assignment for Authorizations Area
 
-### This project provides RESTFull APIs for accessing Power Of Attorney and Account information
+### This project provides RESTFull APIs for access Power Of Attorney and Account information
 
 Power of Attorney API:
- - Granting Read/Write access for payments and savings accounts
+ - Granting Read/Write access for Payment and Savings accounts
  - Granted Accounts
  - List of Power Of Attorneys
 
 Account API Endpoints:
-- Creating Payment or Saving Account
+- Creating Payment or Savings Account
 - Account information
 - Accounts
 

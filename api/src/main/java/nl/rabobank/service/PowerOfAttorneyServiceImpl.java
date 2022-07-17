@@ -3,6 +3,7 @@ package nl.rabobank.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.rabobank.account.Account;
+import nl.rabobank.authorizations.Authorization;
 import nl.rabobank.authorizations.PowerOfAttorney;
 import nl.rabobank.exception.AccountNotFoundException;
 import nl.rabobank.exception.PowerOfAttorneySecurityException;
@@ -47,6 +48,15 @@ public class PowerOfAttorneyServiceImpl implements PowerOfAttorneyService {
     public List<Account> getGrantedAccounts(String granteeName) {
         log.debug("Fetching Granted Accounts by Grantee: {}", granteeName);
         return accountRepository.findAccountEntityByGrantees_GranteeNameOrderById(granteeName)
+                .stream()
+                .map(toAccountConverter::convert)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Account> getGrantedAccounts(final String granteeName, final Authorization authorization) {
+        log.debug("Fetching Granted Accounts by Grantee: {}", granteeName);
+        return accountRepository.findAccountEntityByGrantees_GranteeNameAndGrantees_AuthorizationOrderById(granteeName, authorization)
                 .stream()
                 .map(toAccountConverter::convert)
                 .collect(Collectors.toList());

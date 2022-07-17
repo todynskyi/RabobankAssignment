@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import nl.rabobank.account.Account;
+import nl.rabobank.authorizations.Authorization;
 import nl.rabobank.authorizations.PowerOfAttorney;
 import nl.rabobank.model.CreatePowerOfAttorneyDto;
 import nl.rabobank.model.ErrorDetails;
@@ -76,6 +77,17 @@ public class PowerOfAttorneyController {
     public List<Account> getGrantedAccounts(
             @Parameter(description = "Grantee Name") @PathVariable("granteeName") String granteeName) {
         return powerOfAttorneyService.getGrantedAccounts(granteeName);
+    }
+
+    @Operation(summary = "Returns granted accounts for the particular grantee and authorization")
+    @ApiResponses({
+            @ApiResponse(responseCode = OK, description = "Returns list of granted accounts")
+    })
+    @GetMapping("{granteeName}/accounts/{authorization}")
+    public List<Account> getGrantedAccounts(
+            @Parameter(description = "Grantee Name") @PathVariable("granteeName") String granteeName,
+            @Parameter(description = "Authorization Read/Write") @PathVariable("authorization") Authorization authorization) {
+        return powerOfAttorneyService.getGrantedAccounts(granteeName, authorization);
     }
 
     @Operation(summary = "Returns Power Of Attorneys for the particular grantee")
