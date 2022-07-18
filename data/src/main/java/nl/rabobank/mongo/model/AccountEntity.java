@@ -2,18 +2,16 @@ package nl.rabobank.mongo.model;
 
 import lombok.Builder;
 import lombok.Data;
+import nl.rabobank.account.Account;
 import nl.rabobank.account.AccountType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @Data
 @Builder(toBuilder = true)
 @Document("accounts")
-public class AccountEntity {
+public class AccountEntity implements Account {
 
     @Id
     private String id;
@@ -22,14 +20,4 @@ public class AccountEntity {
     private String accountHolderName;
     private Double balance;
     private AccountType type;
-    @Indexed
-    private Set<PowerOfAttorneyGrantee> powerOfAttorneys;
-
-    public AccountEntity addGrantee(PowerOfAttorneyGrantee grantee) {
-        if (powerOfAttorneys == null) {
-            powerOfAttorneys = new HashSet<>();
-        }
-        powerOfAttorneys.add(grantee);
-        return this;
-    }
 }

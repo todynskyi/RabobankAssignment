@@ -1,6 +1,9 @@
 package nl.rabobank.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.MongoWriteException;
+import com.mongodb.ServerAddress;
+import com.mongodb.WriteError;
 import lombok.SneakyThrows;
 import nl.rabobank.account.Account;
 import nl.rabobank.account.AccountType;
@@ -11,6 +14,7 @@ import nl.rabobank.exception.PowerOfAttorneySecurityException;
 import nl.rabobank.model.CreatePowerOfAttorneyDto;
 import nl.rabobank.model.ErrorDetails;
 import nl.rabobank.service.PowerOfAttorneyService;
+import org.bson.BsonDocument;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,12 +32,14 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static nl.rabobank.mongo.util.MongoUtils.POWER_OF_ATTORNEY_UNIQUE_INDEX_NAME;
 import static nl.rabobank.util.AccountTestDataUtils.createAccounts;
 import static nl.rabobank.util.PowerOfAttorneyTestDataUtils.createPowerOfAttorneyDto;
 import static nl.rabobank.util.PowerOfAttorneyTestDataUtils.createPowerOfAttorneys;
 import static nl.rabobank.util.PowerOfAttorneyTestDataUtils.toPowerOfAttorney;
 import static nl.rabobank.util.ValidationUtils.NOT_BLANK_VALIDATION_MESSAGE;
 import static nl.rabobank.util.ValidationUtils.NOT_NULL_VALIDATION_MESSAGE;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -94,6 +100,20 @@ public class PowerOfAttorneyControllerTest {
         mockMvc.perform(post("/api/v1/power-of-attorneys").content(objectMapper.writeValueAsBytes(powerOfAttorneyDto))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
+                .andExpect(content().bytes(objectMapper.writeValueAsBytes(error)))
+                .andDo(print());
+    }
+
+    @DisplayName("Should not create Power Of Attorney and return NotFound in case of missing account")
+    @SneakyThrows
+    @Test
+    public void shouldNotCreatePowerOfAttorneyAndReturnBadRequestInCaseOfConstraint() {
+        ErrorDetails error = new ErrorDetails("Authorization already granted");
+        Mockito.when(powerOfAttorneyService.grantAccess(any())).thenThrow(new MongoWriteException(new WriteError(1, POWER_OF_ATTORNEY_UNIQUE_INDEX_NAME, new BsonDocument()), new ServerAddress()));
+
+        mockMvc.perform(post("/api/v1/power-of-attorneys").content(objectMapper.writeValueAsBytes(createPowerOfAttorneyDto(Authorization.WRITE)))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
                 .andExpect(content().bytes(objectMapper.writeValueAsBytes(error)))
                 .andDo(print());
     }

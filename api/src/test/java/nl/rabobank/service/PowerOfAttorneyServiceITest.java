@@ -8,8 +8,9 @@ import nl.rabobank.exception.AccountNotFoundException;
 import nl.rabobank.exception.PowerOfAttorneySecurityException;
 import nl.rabobank.model.CreatePowerOfAttorneyDto;
 import nl.rabobank.mongo.model.AccountEntity;
-import nl.rabobank.mongo.model.PowerOfAttorneyGrantee;
+import nl.rabobank.mongo.model.PowerOfAttorneyEntity;
 import nl.rabobank.mongo.repository.AccountRepository;
+import nl.rabobank.mongo.repository.PowerOfAttorneyRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +21,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.util.Pair;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -30,10 +30,10 @@ import java.util.stream.Stream;
 import static nl.rabobank.mongo.model.Profiles.MONGO_DATA_PROFILE;
 import static nl.rabobank.util.AccountTestDataUtils.createAccountEntity;
 import static nl.rabobank.util.AccountUtils.generateAccountNumber;
+import static nl.rabobank.util.PowerOfAttorneyTestDataUtils.createPowerOfAttorney;
 import static nl.rabobank.util.PowerOfAttorneyTestDataUtils.createPowerOfAttorneyDto;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @ActiveProfiles(profiles = {MONGO_DATA_PROFILE})
@@ -44,13 +44,16 @@ public class PowerOfAttorneyServiceITest {
     @Autowired
     private AccountRepository accountRepository;
     @Autowired
+    private PowerOfAttorneyRepository powerOfAttorneyRepository;
+    @Autowired
     private Converter<AccountEntity, Account> toAccountConverter;
     @Autowired
-    private Converter<Pair<List<AccountEntity>, String>, List<PowerOfAttorney>> toPowerOfAttorneys;
+    private Converter<PowerOfAttorneyEntity, PowerOfAttorney> toPowerOfAttorney;
 
     @AfterEach
     public void after() {
         accountRepository.deleteAll();
+        powerOfAttorneyRepository.deleteAll();
     }
 
     @DisplayName("Should create Power Of Attorney for Saving and Payment accounts")
@@ -71,17 +74,16 @@ public class PowerOfAttorneyServiceITest {
         assertEquals(powerOfAttorneyDto.getAccountNumber(), grantedAccount.getAccountNumber());
         assertEquals(account.getBalance(), grantedAccount.getBalance());
 
-        List<AccountEntity> accounts = accountRepository.findAccountEntityByPowerOfAttorneys_GranteeNameOrderById(powerOfAttorneyDto.getGrantee());
-        assertEquals(1, accounts.size());
+        List<PowerOfAttorneyEntity> powerOfAttorneys = powerOfAttorneyRepository.findByGranteeOrderById(powerOfAttorneyDto.getGrantee());
+        assertEquals(1, powerOfAttorneys.size());
 
-        AccountEntity granteeAccount = accounts.get(0);
-        assertNotNull(granteeAccount);
+        PowerOfAttorneyEntity powerOfAttorneyEntity = powerOfAttorneys.get(0);
+        assertNotNull(powerOfAttorneyEntity);
 
+        AccountEntity granteeAccount = powerOfAttorneyEntity.getAccount();
         assertEquals(powerOfAttorneyDto.getGrantor(), granteeAccount.getAccountHolderName());
         assertEquals(powerOfAttorneyDto.getAccountNumber(), granteeAccount.getAccountNumber());
         assertEquals(account.getBalance(), granteeAccount.getBalance());
-
-        assertTrue(granteeAccount.getPowerOfAttorneys().contains(new PowerOfAttorneyGrantee(powerOfAttorneyDto.getGrantee(), authorization)));
     }
 
     @DisplayName("Should return PowerOfAttorneySecurityException in case of same Grantor and Grantee")
@@ -95,7 +97,6 @@ public class PowerOfAttorneyServiceITest {
                 powerOfAttorneyService.grantAccess(powerOfAttorneyDto)
         );
         assertEquals("Grantor cannot give access to himself/herself", thrown.getMessage());
-
     }
 
     @DisplayName("Should return PowerOfAttorneySecurityException in case of granting to not own account")
@@ -134,10 +135,10 @@ public class PowerOfAttorneyServiceITest {
         AccountEntity account2 = accountRepository.save(createAccountEntity(generateAccountNumber(), "Holder2", AccountType.PAYMENT, 100.));
         accountRepository.save(createAccountEntity(generateAccountNumber(), "Holder3", AccountType.SAVINGS, 100.));
 
-        accountRepository.save(account1.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.READ)));
-        accountRepository.save(account1.addGrantee(new PowerOfAttorneyGrantee(account2.getAccountHolderName(), Authorization.READ)));
-        accountRepository.save(account2.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.READ)));
-        accountRepository.save(account2.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.WRITE)));
+        powerOfAttorneyRepository.save(createPowerOfAttorney(account1, ownAccount.getAccountHolderName(), Authorization.READ));
+        powerOfAttorneyRepository.save(createPowerOfAttorney(account1, account2.getAccountHolderName(), Authorization.READ));
+        powerOfAttorneyRepository.save(createPowerOfAttorney(account2, ownAccount.getAccountHolderName(), Authorization.READ));
+        powerOfAttorneyRepository.save(createPowerOfAttorney(account2, ownAccount.getAccountHolderName(), Authorization.WRITE));
 
         List<Account> expected = Stream.of(account1, account2).map(toAccountConverter::convert).collect(Collectors.toList());
 
@@ -156,10 +157,10 @@ public class PowerOfAttorneyServiceITest {
         AccountEntity account2 = accountRepository.save(createAccountEntity(generateAccountNumber(), "Holder2", AccountType.PAYMENT, 100.));
         accountRepository.save(createAccountEntity(generateAccountNumber(), "Holder3", AccountType.SAVINGS, 100.));
 
-        accountRepository.save(account1.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.READ)));
-        accountRepository.save(account1.addGrantee(new PowerOfAttorneyGrantee(account2.getAccountHolderName(), Authorization.READ)));
-        accountRepository.save(account2.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.READ)));
-        accountRepository.save(account2.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.WRITE)));
+        powerOfAttorneyRepository.save(createPowerOfAttorney(account1, ownAccount.getAccountHolderName(), Authorization.READ));
+        powerOfAttorneyRepository.save(createPowerOfAttorney(account1, account2.getAccountHolderName(), Authorization.READ));
+        powerOfAttorneyRepository.save(createPowerOfAttorney(account2, ownAccount.getAccountHolderName(), Authorization.READ));
+        powerOfAttorneyRepository.save(createPowerOfAttorney(account2, ownAccount.getAccountHolderName(), Authorization.WRITE));
 
         List<Account> expected = Stream.of(account2).map(toAccountConverter::convert).collect(Collectors.toList());
 
@@ -178,13 +179,13 @@ public class PowerOfAttorneyServiceITest {
         AccountEntity account2 = accountRepository.save(createAccountEntity(generateAccountNumber(), "Holder2", AccountType.PAYMENT, 100.));
         accountRepository.save(createAccountEntity(generateAccountNumber(), "Holder3", AccountType.SAVINGS, 100.));
 
-        account1 = accountRepository.save(account1.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.READ)));
-        account1 = accountRepository.save(account1.addGrantee(new PowerOfAttorneyGrantee(account2.getAccountHolderName(), Authorization.READ)));
-        account2 = accountRepository.save(account2.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.READ)));
-        account2 = accountRepository.save(account2.addGrantee(new PowerOfAttorneyGrantee(ownAccount.getAccountHolderName(), Authorization.WRITE)));
+        PowerOfAttorneyEntity powerOfAttorney1 = powerOfAttorneyRepository.save(createPowerOfAttorney(account1, ownAccount.getAccountHolderName(), Authorization.READ));
+        powerOfAttorneyRepository.save(createPowerOfAttorney(account1, account2.getAccountHolderName(), Authorization.READ));
+        PowerOfAttorneyEntity powerOfAttorney2 = powerOfAttorneyRepository.save(createPowerOfAttorney(account2, ownAccount.getAccountHolderName(), Authorization.READ));
+        PowerOfAttorneyEntity powerOfAttorney3 = powerOfAttorneyRepository.save(createPowerOfAttorney(account2, ownAccount.getAccountHolderName(), Authorization.WRITE));
 
 
-        List<PowerOfAttorney> expected = toPowerOfAttorneys.convert(Pair.of(List.of(account1, account2), grantee));
+        List<PowerOfAttorney> expected = Stream.of(powerOfAttorney1, powerOfAttorney2, powerOfAttorney3).map(toPowerOfAttorney::convert).collect(Collectors.toList());
 
         List<PowerOfAttorney> powerOfAttorneys = powerOfAttorneyService.getPowerOfAttorneys(grantee);
         assertEquals(3, powerOfAttorneys.size());

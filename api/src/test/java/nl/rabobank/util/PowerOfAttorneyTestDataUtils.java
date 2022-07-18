@@ -5,6 +5,8 @@ import nl.rabobank.account.AccountType;
 import nl.rabobank.authorizations.Authorization;
 import nl.rabobank.authorizations.PowerOfAttorney;
 import nl.rabobank.model.CreatePowerOfAttorneyDto;
+import nl.rabobank.mongo.model.AccountEntity;
+import nl.rabobank.mongo.model.PowerOfAttorneyEntity;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.time.Instant;
@@ -21,8 +23,8 @@ public class PowerOfAttorneyTestDataUtils {
 
     public static CreatePowerOfAttorneyDto createPowerOfAttorneyDto(Authorization authorization) {
         CreatePowerOfAttorneyDto powerOfAttorneyDto = new CreatePowerOfAttorneyDto();
-        powerOfAttorneyDto.setGrantor("Grantor " + Instant.now().getEpochSecond());
-        powerOfAttorneyDto.setGrantee("Grantee " + Instant.now().getEpochSecond());
+        powerOfAttorneyDto.setGrantor("Grantor " + Instant.now().getNano());
+        powerOfAttorneyDto.setGrantee("Grantee " + Instant.now().getNano());
         powerOfAttorneyDto.setAuthorization(authorization);
         powerOfAttorneyDto.setAccountNumber(generateAccountNumber());
         return powerOfAttorneyDto;
@@ -44,6 +46,15 @@ public class PowerOfAttorneyTestDataUtils {
                 .granteeName(grantee)
                 .authorization(authorization)
                 .account(createAccount(generateAccountNumber(), grantorName, 0., accountType))
+                .build();
+    }
+
+    public static PowerOfAttorneyEntity createPowerOfAttorney(AccountEntity account, String grantee, Authorization authorization) {
+        return PowerOfAttorneyEntity.builder()
+                .grantor(account.getAccountHolderName())
+                .grantee(grantee)
+                .authorization(authorization)
+                .account(account)
                 .build();
     }
 

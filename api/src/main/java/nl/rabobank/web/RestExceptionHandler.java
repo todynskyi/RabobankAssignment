@@ -1,8 +1,10 @@
 package nl.rabobank.web;
 
+import com.mongodb.MongoWriteException;
 import nl.rabobank.exception.AccountNotFoundException;
 import nl.rabobank.exception.PowerOfAttorneySecurityException;
 import nl.rabobank.model.ErrorDetails;
+import nl.rabobank.mongo.util.MongoUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -25,6 +27,15 @@ public class RestExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(PowerOfAttorneySecurityException.class)
     public ErrorDetails handleException(PowerOfAttorneySecurityException ex) {
+        return new ErrorDetails(ex.getMessage());
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(MongoWriteException.class)
+    public ErrorDetails handleException(MongoWriteException ex) {
+        if (ex.getMessage().contains(MongoUtils.POWER_OF_ATTORNEY_UNIQUE_INDEX_NAME)) {
+            return new ErrorDetails("Authorization already granted");
+        }
         return new ErrorDetails(ex.getMessage());
     }
 
