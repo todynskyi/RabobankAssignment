@@ -11,7 +11,7 @@ public interface AccountRepository extends MongoRepository<AccountEntity, String
 
     Optional<AccountEntity> findAccountEntityByAccountNumber(String accountNumber);
 
-    List<AccountEntity> findAccountEntityByGrantees_GranteeNameOrderById(String granteeName);
+    List<AccountEntity> findAccountEntityByPowerOfAttorneys_GranteeNameOrderById(String granteeName);
 
-    List<AccountEntity> findAccountEntityByGrantees_GranteeNameAndGrantees_AuthorizationOrderById(String granteeName, Authorization authorization);
+    List<AccountEntity> findAccountEntityByPowerOfAttorneys_GranteeNameAndPowerOfAttorneys_AuthorizationOrderById(String granteeName, Authorization authorization);
 }

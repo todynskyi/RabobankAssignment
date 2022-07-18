@@ -71,7 +71,7 @@ public class PowerOfAttorneyServiceITest {
         assertEquals(powerOfAttorneyDto.getAccountNumber(), grantedAccount.getAccountNumber());
         assertEquals(account.getBalance(), grantedAccount.getBalance());
 
-        List<AccountEntity> accounts = accountRepository.findAccountEntityByGrantees_GranteeNameOrderById(powerOfAttorneyDto.getGrantee());
+        List<AccountEntity> accounts = accountRepository.findAccountEntityByPowerOfAttorneys_GranteeNameOrderById(powerOfAttorneyDto.getGrantee());
         assertEquals(1, accounts.size());
 
         AccountEntity granteeAccount = accounts.get(0);
@@ -81,7 +81,7 @@ public class PowerOfAttorneyServiceITest {
         assertEquals(powerOfAttorneyDto.getAccountNumber(), granteeAccount.getAccountNumber());
         assertEquals(account.getBalance(), granteeAccount.getBalance());
 
-        assertTrue(granteeAccount.getGrantees().contains(new PowerOfAttorneyGrantee(powerOfAttorneyDto.getGrantee(), authorization)));
+        assertTrue(granteeAccount.getPowerOfAttorneys().contains(new PowerOfAttorneyGrantee(powerOfAttorneyDto.getGrantee(), authorization)));
     }
 
     @DisplayName("Should return PowerOfAttorneySecurityException in case of same Grantor and Grantee")

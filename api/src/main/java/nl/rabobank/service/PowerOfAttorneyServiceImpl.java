@@ -47,16 +47,17 @@ public class PowerOfAttorneyServiceImpl implements PowerOfAttorneyService {
     @Override
     public List<Account> getGrantedAccounts(String granteeName) {
         log.debug("Fetching Granted Accounts by Grantee: {}", granteeName);
-        return accountRepository.findAccountEntityByGrantees_GranteeNameOrderById(granteeName)
+        return accountRepository.findAccountEntityByPowerOfAttorneys_GranteeNameOrderById(granteeName)
                 .stream()
                 .map(toAccountConverter::convert)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Account> getGrantedAccounts(final String granteeName, final Authorization authorization) {
         log.debug("Fetching Granted Accounts by Grantee: {}", granteeName);
-        return accountRepository.findAccountEntityByGrantees_GranteeNameAndGrantees_AuthorizationOrderById(granteeName, authorization)
+        return accountRepository.findAccountEntityByPowerOfAttorneys_GranteeNameAndPowerOfAttorneys_AuthorizationOrderById(granteeName, authorization)
                 .stream()
                 .map(toAccountConverter::convert)
                 .collect(Collectors.toList());
@@ -66,7 +67,7 @@ public class PowerOfAttorneyServiceImpl implements PowerOfAttorneyService {
     @Override
     public List<PowerOfAttorney> getPowerOfAttorneys(String granteeName) {
         log.debug("Fetching Power Of Attorneys by Grantee: {}", granteeName);
-        List<AccountEntity> accounts = accountRepository.findAccountEntityByGrantees_GranteeNameOrderById(granteeName);
+        List<AccountEntity> accounts = accountRepository.findAccountEntityByPowerOfAttorneys_GranteeNameOrderById(granteeName);
         return toPowerOfAttorneys.convert(Pair.of(accounts, granteeName));
     }
 

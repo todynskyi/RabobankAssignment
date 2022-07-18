@@ -23,13 +23,13 @@ public class AccountEntity {
     private Double balance;
     private AccountType type;
     @Indexed
-    private Set<PowerOfAttorneyGrantee> grantees;
+    private Set<PowerOfAttorneyGrantee> powerOfAttorneys;
 
     public AccountEntity addGrantee(PowerOfAttorneyGrantee grantee) {
-        if (grantees == null) {
-            grantees = new HashSet<>();
+        if (powerOfAttorneys == null) {
+            powerOfAttorneys = new HashSet<>();
         }
-        grantees.add(grantee);
+        powerOfAttorneys.add(grantee);
         return this;
     }
 }

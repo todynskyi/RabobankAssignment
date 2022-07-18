@@ -27,7 +27,7 @@ public class AccountsToPowerOfAttorneyConverter implements Converter<Pair<List<A
     }
 
     private Stream<PowerOfAttorney> toPowerOfAttorneys(AccountEntity account, String granteeName) {
-        return account.getGrantees()
+        return account.getPowerOfAttorneys()
                 .stream()
                 .filter(grantee -> grantee.getGranteeName().equals(granteeName))
                 .map(grantee -> PowerOfAttorney.builder()
